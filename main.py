@@ -1,9 +1,8 @@
 from pkg.plugin.context import register, handler, llm_func, BasePlugin, APIHost, EventContext
 from pkg.plugin.events import *  # 导入事件类
 
-
 # 注册插件
-@register(name="Hello", description="hello world", version="0.1", author="RockChinQ")
+@register(name="BanUser", description="Ban a user in group chat", version="0.1", author="RockChinQ")
 class MyPlugin(BasePlugin):
 
     # 插件加载时触发
@@ -18,31 +17,22 @@ class MyPlugin(BasePlugin):
     @handler(PersonNormalMessageReceived)
     async def person_normal_message_received(self, ctx: EventContext):
         msg = ctx.event.text_message  # 这里的 event 即为 PersonNormalMessageReceived 的对象
-        if msg == "hello":  # 如果消息为hello
+        sender_id = ctx.event.sender_id
+        if msg.startswith("ban") and sender_id == "2160899714":  # 如果消息以"ban"开头并且发起者是管理员
 
-            # 输出调试信息
-            self.ap.logger.debug("hello, {}".format(ctx.event.sender_id))
+            # 解析命令，提取要禁言的群号和目标用户QQ号
+            _, group_id, target_user_id, duration = msg.split(" ")
+            group_id = int(group_id)
+            target_user_id = int(target_user_id)
+            duration = int(duration)
 
-            # 回复消息 "hello, <发送者id>!"
-            ctx.add_return("reply", ["hello, {}!".format(ctx.event.sender_id)])
+            # 禁言目标用户
+            await self.ban_user(group_id, target_user_id, duration)
 
-            # 阻止该事件默认行为（向接口获取回复）
-            ctx.prevent_default()
-
-    # 当收到群消息时触发
-    @handler(GroupNormalMessageReceived)
-    async def group_normal_message_received(self, ctx: EventContext):
-        msg = ctx.event.text_message  # 这里的 event 即为 GroupNormalMessageReceived 的对象
-        if msg == "hello":  # 如果消息为hello
-
-            # 输出调试信息
-            self.ap.logger.debug("hello, {}".format(ctx.event.sender_id))
-
-            # 回复消息 "hello, everyone!"
-            ctx.add_return("reply", ["hello, everyone!"])
-
-            # 阻止该事件默认行为（向接口获取回复）
-            ctx.prevent_default()
+    # 异步禁言用户
+    async def ban_user(self, group_id, user_id, duration):
+        # 这里填写禁言用户的代码，可以根据你的机器人所使用的接口进行调用
+        pass
 
     # 插件卸载时触发
     def __del__(self):
